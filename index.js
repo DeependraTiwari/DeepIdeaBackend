@@ -38,7 +38,7 @@ const Task = mongoose.model("Task", taskSchema);
 
 app.post("/register", async (req, res) => {
   const { username, password } = req.body;
-  const hashed = await bcrypt(password, 10);
+  const hashed = await bcrypt.hash(password, 10);
   const user = new User({ username, password: hashed });
   await user.save();
   res.json({ message: "User has been registered." });
