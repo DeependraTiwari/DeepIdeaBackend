@@ -31,8 +31,10 @@ const taskSchema = new mongoose.Schema({
   text: String,
   status: String,
   priority: String,
+  dueDate: Date, 
+  category: String, 
   userId: mongoose.Schema.Types.ObjectId,
-});
+}, { timestamps: true }); 
 
 const Task = mongoose.model("Task", taskSchema);
 
@@ -104,6 +106,32 @@ app.patch("/tasks/:id/priority", authMiddleware, async (req, res) => {
   );
   if (!task) return res.status(404).json({ message: "Task not found" });
   res.json(task);
+});
+
+
+//Edit Task Text & Other Fields Route
+app.patch("/tasks/:id", authMiddleware, async (req, res) => {
+  const { text, dueDate, category } = req.body;
+  const task = await Task.findOneAndUpdate(
+    { _id: req.params.id, userId: req.userId },
+    { text, dueDate, category },
+    { new: true }
+  );
+  if (!task) return res.status(404).json({ message: "Task not found" });
+  res.json(task);
+});
+
+//Analytics Route
+app.get("/tasks/analytics/stats", authMiddleware, async (req, res) => {
+  const tasks = await Task.find({ userId: req.userId });
+  const total = tasks.length;
+  const completed = tasks.filter((t) => t.status === "completed").length;
+  const pending = total - completed;
+  const perCategory = {};
+  tasks.forEach((t) => {
+    perCategory[t.category] = (perCategory[t.category] || 0) + 1;
+  });
+  res.json({ total, completed, pending, perCategory });
 });
 
 app.listen(8080, () => console.log("Server is running on port:8080"));
